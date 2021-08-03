@@ -13,64 +13,12 @@ macro bind(def, element)
     end
 end
 
-# ╔═╡ 1ac758db-cec5-4f05-accc-0d5fe0d961dd
-using OrdinaryDiffEq
-
 # ╔═╡ a54eefa6-4559-41cd-9bf7-67fbf1f85645
 begin
+	using OrdinaryDiffEq
 	using Plots
 	plotly()
 	using PlutoUI
-end
-
-# ╔═╡ 83b2d752-9cee-4424-a28a-6b680928116e
-md"""
-# SIR Modelling
-In this notebook we will go through several variations of the SIR model for modelling disease spread. We will start with a basic model, and then add variations to make some of the assumptions more realistic. First we'll import some packages to solve the systems and plot the results.
-
-The plots will be interactive, however to change the parameters using the slides you will need to run the notebook yourself, which can be done using the button in the top right corner.
-"""
-
-# ╔═╡ 475b9f52-f448-11eb-1344-71dc8376f17c
-md"""
-## Basic SIR Model
-We will be using $$S$$, $$I$$ and $$R$$ to represent the suspectible, infectious,  and recovered proportions of the population. The total population will be fixed, so $$S + I + R = 1$$. People move from $$S$$ to $$I$$ with a transmission rate of $$\beta$$, and have an average infectious period of $$1/\gamma$$. The system of differential equations is then
-
-$$\frac{dS}{dt} = -\beta SI, \quad \frac{dI}{dt} = \beta SI- \gamma I, \quad \frac{dR}{dt} = \gamma I.$$
-"""
-
-# ╔═╡ 794efd19-4775-4fd4-9bab-eeba09e0e846
-function sir!(dn,n,p,t)
-	S, I, R = n
-	β, γ = p
-	dn[1] = dS = -β*S*I
-	dn[2] = dI = β*S*I - γ*I
-	dn[3] = dR = γ*I
-end
-
-# ╔═╡ dde4a78a-dd92-408d-ab9a-315e84e2e742
-# Transmission rate β
-@bind β Slider(0.1 : 0.05 : 1; default=0.4, show_value=true)
-
-# ╔═╡ 717cc7de-e542-46e5-a0d4-f5a925bb6d16
-# Average infectious period 1/γ
-@bind avgPeriod Slider(1:10; default=8, show_value=true)
-
-# ╔═╡ becc0a52-e443-4276-bdfd-1097a9c496fb
-# Initial infected percentage
-@bind infected Slider(1:20; default=5, show_value=true)
-
-# ╔═╡ f81d6f4d-c825-47d0-a9bc-d56b629b750a
-begin
-	# Initial conditions
-	p = [β, 1/avgPeriod] # β, γ
-	n0 = [1 - infected/100, infected/100, 0] # S0, I0, R0
-	
-	tspan = (0.0, 80.0)
-	prob = ODEProblem(sir!,n0,tspan,p)
-	sol = solve(prob,Tsit5())
-	plot(sol, lw = 2, label = ["S" "I" "R"])
-	plot!(title = "Basic SIR Model", xlabel = "Days", ylabel = "Proportion")
 end
 
 # ╔═╡ 0645b0c1-2344-4e19-9996-11426cd09d4a
@@ -79,6 +27,11 @@ md"""
 The basic model assumes that you are immediately infectious after infection. However this is not always true, as some diseases have a latent period where you are infected but not infectious. We can represent this by splitting the $$I$$ class into a new exposed class $$E$$, with an average latent period of $$1/\sigma$$. The system of differential equations is then
 
 $$\frac{dS}{dt} = -\beta SI, \quad \frac{dE}{dt} = \beta SI -\sigma E, \quad \frac{dI}{dt} = \sigma E -\gamma I, \quad \frac{dR}{dt} = \gamma I.$$
+"""
+
+# ╔═╡ 83b2d752-9cee-4424-a28a-6b680928116e
+md"""
+First we'll import some packages for solving the systems and plotting the results. The plots will be interactive, however to change the parameters using the slides you will need to run the notebook yourself, which can be done using the button in the top right corner.
 """
 
 # ╔═╡ 0cfe44b5-f8a5-42a5-a2a6-449e605fef5b
@@ -91,20 +44,32 @@ function seir!(dn,n,p,t)
 	dn[4] = dR = γ*I
 end
 
+# ╔═╡ dde4a78a-dd92-408d-ab9a-315e84e2e742
+# Transmission rate β
+@bind β Slider(0.1 : 0.05 : 1; default=0.4, show_value=true)
+
+# ╔═╡ 717cc7de-e542-46e5-a0d4-f5a925bb6d16
+# Average infectious period 1/γ
+@bind avgPeriod Slider(1:10; default=8, show_value=true)
+
 # ╔═╡ 2527aed4-cbaa-4803-927e-d1f1df7ee656
-# Latent period σ
+# Average latent period 1/σ
 @bind avgLatent Slider(1:10; default=3, show_value=true)
+
+# ╔═╡ becc0a52-e443-4276-bdfd-1097a9c496fb
+# Initial infected percentage
+@bind infected Slider(1:20; default=5, show_value=true)
 
 # ╔═╡ d74f0493-7762-4bc0-be95-c23c233046bc
 begin
 	# Initial conditions
-	p_e = [β, 1/avgPeriod, 1/avgLatent] # β, γ, σ
-	n0_e = [1 - infected/100, 0, infected/100, 0] # S0, E0, I0, R0
+	p = [β, 1/avgPeriod, 1/avgLatent] # β, γ, σ
+	n0 = [1 - infected/100, 0, infected/100, 0] # S0, E0, I0, R0
 	
-	tspan_e = (0.0, 80.0)
-	prob_e = ODEProblem(seir!,n0_e,tspan_e,p_e)
-	sol_e = solve(prob_e,Tsit5())
-	plot(sol_e, lw = 2, label = ["S" "E" "I" "R"])
+	tspan = (0.0, 80.0)
+	prob = ODEProblem(seir!,n0,tspan,p)
+	sol = solve(prob,Tsit5())
+	plot(sol, lw = 2, label = ["S" "E" "I" "R"])
 	plot!(title = "SEIR Model", xlabel = "Days", ylabel = "Proportion")
 end
 
@@ -1301,18 +1266,14 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
+# ╟─0645b0c1-2344-4e19-9996-11426cd09d4a
 # ╟─83b2d752-9cee-4424-a28a-6b680928116e
-# ╠═1ac758db-cec5-4f05-accc-0d5fe0d961dd
 # ╠═a54eefa6-4559-41cd-9bf7-67fbf1f85645
-# ╟─475b9f52-f448-11eb-1344-71dc8376f17c
-# ╠═794efd19-4775-4fd4-9bab-eeba09e0e846
+# ╠═0cfe44b5-f8a5-42a5-a2a6-449e605fef5b
 # ╠═dde4a78a-dd92-408d-ab9a-315e84e2e742
 # ╠═717cc7de-e542-46e5-a0d4-f5a925bb6d16
-# ╠═becc0a52-e443-4276-bdfd-1097a9c496fb
-# ╠═f81d6f4d-c825-47d0-a9bc-d56b629b750a
-# ╟─0645b0c1-2344-4e19-9996-11426cd09d4a
-# ╠═0cfe44b5-f8a5-42a5-a2a6-449e605fef5b
 # ╠═2527aed4-cbaa-4803-927e-d1f1df7ee656
+# ╠═becc0a52-e443-4276-bdfd-1097a9c496fb
 # ╠═d74f0493-7762-4bc0-be95-c23c233046bc
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
