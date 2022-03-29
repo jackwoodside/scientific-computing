@@ -7,21 +7,9 @@ using InteractiveUtils
 # ╔═╡ 73dc8207-1512-41b7-af23-f16d6168622f
 begin
 	using Plots
-	plotly()
+	using LaTeXStrings
 	using LinearAlgebra
 end
-
-# ╔═╡ 09374159-5082-4168-9dc7-39dc40d8b01b
-md"""
-# TODO
-Find random interesting potential
-
-Add in boundary conditions to the eigenfunction solutions for easy plotting
-
-Fix plot scale
-
-Decorate plots properly
-"""
 
 # ╔═╡ 3663ee5c-ae60-11ec-1302-5f95fa170bac
 md"""
@@ -39,7 +27,9 @@ This differential equation has a set of eigenfunctions $\psi_n$, with correspond
 
 $\psi_n = \sqrt{\frac{2}{L}}\sin\left(\frac{n\pi x}{L}\right), \quad E_n = \frac{n^2\pi^2\hbar^2}{2mL^2},$
 
-but for an arbitrary potential it can be much more difficult or even impossible to find an analytic solution. Before we solve it numerically, we need to convert the equation into a dimensionless form. We can set $\hbar = 1$, and divide $x$ by the length scale of the system to give the dimensionless coordinate $x' = x/L$. Multiplying both sides by $mL^2$ then gives us
+but for an arbitrary potential it can be much more difficult or even impossible to find an analytic solution.
+
+Before we solve it numerically, we need to convert the equation into a dimensionless form. We can set $\hbar = 1$, and divide $x$ by the length scale of the system to give the dimensionless quantity $x' = x/L$. Multiplying both sides by $mL^2$ then gives us
 
 $-\frac{1}{2}\frac{d^2\psi}{dx'^2} + mL^2V(x')\psi = mL^2E\psi$
 
@@ -53,13 +43,13 @@ Substituting this into the Schrödinger equation, we get
 
 $-\frac{1}{2\Delta x'^2}\psi(x'_{j+1}) + \left(\frac{1}{\Delta x'^2} + mL^2V(x'_j)\right)\psi(x'_j) - \frac{1}{2\Delta x'^2}\psi(x'_{j-1}) = mL^2E\psi(x'_j)$
 
-which is a system of linear equations. Since at the endpoints we have $\psi(x'_0) = \psi(x'_N) = 0$, we only need to solve for $\psi$ at $x_1, ..., x_{N-1}$. This means the left hand side can be represented as a tridiagonal matrix, with the main diagonal being
+which is a system of linear equations. Since at the endpoints we have $\psi(x'_0) = \psi(x'_N) = 0$, we only need to solve for $\psi$ at $x'_1, ..., x'_{N-1}$. This means the left hand side can be represented as a tridiagonal matrix, with the main diagonal being
 
 $\frac{1}{\Delta x'^2} + mL^2V(x'_i)$
 
 and the upper and lower diagonals being
 
-$-\frac{1}{2\Delta x'^2}$
+$-\frac{1}{2\Delta x'^2},$
 
 so the eigenfunctions and eigenenergies are just the eigenvectors and eigenvalues of this matrix.
 """
@@ -70,7 +60,7 @@ First we'll import some packages for solving the system and plotting the results
 """
 
 # ╔═╡ 8fa0252c-77e9-42cf-8283-2662b6d60c67
-# Define x array
+# Create x array
 begin
 	N = 2000
 	Δx = 1/N
@@ -80,14 +70,14 @@ end;
 # ╔═╡ c32bf653-dd0e-44f4-b6fe-eb6c7997b01a
 # Define potential
 function mL2V(x)
-	return 1000 .* exp.(-(x .- 0.7).^2 ./ (2 * 0.05^2))
+	return 300 ./ (1 .+ 30 .* exp.(-20 .* x)) .- 120 .* exp.(-((x .- 0.6)./(2*0.01)).^2)
 end;
 
 # ╔═╡ 79be43a8-d7d1-4cb5-b44d-2be2d6cb65d2
 # Create tridiagonal matrix
 begin
-	main = 1/Δx^2 .+ mL2V(x)[2:N-1]
-	sub = -1/(2*Δx^2) * ones(length(main) - 1)
+	main = 1/Δx^2 * ones(N-1) .+ mL2V(x)[2:N]
+	sub = -1/(2*Δx^2) * ones(N-2)
 	matrix = SymTridiagonal(main,sub)
 end;
 
@@ -95,24 +85,36 @@ end;
 # Compute eigenfunctions and their associated eigenenergies
 eigenenergies, eigenfunctions = eigen(matrix);
 
+# ╔═╡ e38f4639-0c18-474c-b7ae-ea746605e4b5
+begin
+	plot(x,mL2V(x), legend=false)
+	plot!(title=L"Potential $mL^2V$", xlabel=L"$x/L$")
+end
+
 # ╔═╡ c5b98cde-0e01-4fb9-a7b9-7af63b56942a
 begin
-	plot(eigenfunctions[:, 1].^2)
-	plot!(eigenfunctions[:, 2].^2)
-	plot!(eigenfunctions[:, 3].^2)
-	plot!(eigenfunctions[:, 4].^2)
+	plot(x[2:N],eigenfunctions[:, 1].^2, label=L"\psi_1")
+	plot!(x[2:N],eigenfunctions[:, 2].^2, label=L"\psi_2")
+	plot!(x[2:N],eigenfunctions[:, 3].^2, label=L"\psi_3")
+	plot!(x[2:N],eigenfunctions[:, 4].^2, label=L"\psi_4")
+	plot!(title=L"Eigenfunctions $\psi_n$", xlabel=L"$x/L$", ylabel=L"$|\psi_n|^2$", legend=:outertopright)
 end
 
 # ╔═╡ 13a586b1-6584-49a7-91b5-6c842dbee0bc
-bar(eigenenergies[1:10])
+begin
+	bar(eigenenergies[1:10], legend=false, xticks=1:10)
+	bar!(title=L"Eigenenergies $E_n$", xlabel=L"$n$", ylabel=L"mL^2E/\hbar")
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 
 [compat]
+LaTeXStrings = "~1.3.0"
 Plots = "~1.27.3"
 """
 
@@ -242,9 +244,9 @@ version = "2.2.3+0"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "ae13fcbc7ab8f16b0856729b050ef0c446aa3492"
+git-tree-sha1 = "bad72f730e9e91c08d9427d5e8db95478a3c323d"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
-version = "2.4.4+0"
+version = "2.4.8+0"
 
 [[deps.FFMPEG]]
 deps = ["FFMPEG_jll"]
@@ -296,15 +298,15 @@ version = "3.3.6+0"
 
 [[deps.GR]]
 deps = ["Base64", "DelimitedFiles", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Pkg", "Printf", "Random", "RelocatableFolders", "Serialization", "Sockets", "Test", "UUIDs"]
-git-tree-sha1 = "9f836fb62492f4b0f0d3b06f55983f2704ed0883"
+git-tree-sha1 = "df5f5b0450c489fe6ed59a6c0a9804159c22684d"
 uuid = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
-version = "0.64.0"
+version = "0.64.1"
 
 [[deps.GR_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Cairo_jll", "FFMPEG_jll", "Fontconfig_jll", "GLFW_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pixman_jll", "Pkg", "Qt5Base_jll", "Zlib_jll", "libpng_jll"]
-git-tree-sha1 = "a6c850d77ad5118ad3be4bd188919ce97fffac47"
+git-tree-sha1 = "83578392343a7885147726712523c39edc714956"
 uuid = "d2c73de3-f751-5644-a686-071e5b155ba9"
-version = "0.64.0+0"
+version = "0.64.1+0"
 
 [[deps.GeometryBasics]]
 deps = ["EarCut_jll", "IterTools", "LinearAlgebra", "StaticArrays", "StructArrays", "Tables"]
@@ -994,7 +996,6 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╟─09374159-5082-4168-9dc7-39dc40d8b01b
 # ╟─3663ee5c-ae60-11ec-1302-5f95fa170bac
 # ╟─e0248c24-d6c3-418c-9f69-6b94a84d3419
 # ╠═73dc8207-1512-41b7-af23-f16d6168622f
@@ -1002,7 +1003,8 @@ version = "0.9.1+5"
 # ╠═c32bf653-dd0e-44f4-b6fe-eb6c7997b01a
 # ╠═79be43a8-d7d1-4cb5-b44d-2be2d6cb65d2
 # ╠═6cec324e-9059-48cc-a70e-7fe95e947ab7
-# ╠═c5b98cde-0e01-4fb9-a7b9-7af63b56942a
-# ╠═13a586b1-6584-49a7-91b5-6c842dbee0bc
+# ╟─e38f4639-0c18-474c-b7ae-ea746605e4b5
+# ╟─c5b98cde-0e01-4fb9-a7b9-7af63b56942a
+# ╟─13a586b1-6584-49a7-91b5-6c842dbee0bc
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
