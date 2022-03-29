@@ -35,7 +35,7 @@ $-\frac{1}{2}\frac{d^2\psi}{dx'^2} + mL^2V(x')\psi = mL^2E\psi$
 
 $\psi(x' = 0) = \psi(x' = 1) = 0.$
 
-We can then use the discrete approximation of the second derivative over some series of points $x_j$ with spacing $\Delta x$ given by
+We can then use the discrete approximation of the second derivative over some series of points $x'_j$ with spacing $\Delta x'$ given by
 
 $\frac{d^2\psi}{dx'^2}(x'_j) = \frac{\psi(x'_{j+1}) - 2\psi(x'_j) + \psi(x'_{j-1})}{\Delta x'^2}.$
 
@@ -43,13 +43,20 @@ Substituting this into the Schrödinger equation, we get
 
 $-\frac{1}{2\Delta x'^2}\psi(x'_{j+1}) + \left(\frac{1}{\Delta x'^2} + mL^2V(x'_j)\right)\psi(x'_j) - \frac{1}{2\Delta x'^2}\psi(x'_{j-1}) = mL^2E\psi(x'_j)$
 
-which is a system of linear equations. Since at the endpoints we have $\psi(x'_0) = \psi(x'_N) = 0$, we only need to solve for $\psi$ at $x'_1, ..., x'_{N-1}$. This means the left hand side can be represented as a tridiagonal matrix, with the main diagonal being
+which is a system of linear equations. Since at the endpoints we have $\psi(x'_0) = \psi(x'_N) = 0$, we only need to solve for $\psi$ at $x'_1, ..., x'_{N-1}$. This means the left hand side can be represented as the tridiagonal matrix
 
-$\frac{1}{\Delta x'^2} + mL^2V(x'_i)$
 
-and the upper and lower diagonals being
+$\begin{bmatrix}
+d_1 & e & 0 & \cdots & 0 \\
+e & d_2 & e & \cdots & 0 \\
+0 & e & \ddots & \ddots & \vdots \\
+\vdots & \vdots & \ddots & d_{N-2} & e \\
+0 & 0 & \cdots & e & d_{N-1} 
+\end{bmatrix}$
 
-$-\frac{1}{2\Delta x'^2},$
+where
+
+$d_i = \frac{1}{\Delta x'^2} + mL^2V(x'_i), \quad e = -\frac{1}{2\Delta x'^2},$
 
 so the eigenfunctions and eigenenergies are just the eigenvectors and eigenvalues of this matrix.
 """
