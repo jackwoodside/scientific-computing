@@ -77,13 +77,13 @@ end;
 # ╔═╡ c32bf653-dd0e-44f4-b6fe-eb6c7997b01a
 # Define potential
 function mL2V(x)
-	return 300 ./ (1 .+ 30 .* exp.(-20 .* x)) .- 120 .* exp.(-((x .- 0.6)./(2*0.01)).^2)
+	return 300 / (1 + 30 * exp(-20 * x)) - 120 * exp(-((x - 0.6)/(2*0.01))^2)
 end;
 
 # ╔═╡ 79be43a8-d7d1-4cb5-b44d-2be2d6cb65d2
 # Create tridiagonal matrix
 begin
-	main = 1/Δx^2 * ones(N-1) .+ mL2V(x)[2:N]
+	main = 1/Δx^2 * ones(N-1) + mL2V.(x)[2:N]
 	sub = -1/(2*Δx^2) * ones(N-2)
 	matrix = SymTridiagonal(main,sub)
 end;
@@ -94,7 +94,7 @@ eigenenergies, eigenfunctions = eigen(matrix);
 
 # ╔═╡ e38f4639-0c18-474c-b7ae-ea746605e4b5
 begin
-	plot(x,mL2V(x), legend=false)
+	plot(x,mL2V.(x), legend=false)
 	plot!(title=L"Potential $mL^2V$", xlabel=L"$x/L$")
 end
 
